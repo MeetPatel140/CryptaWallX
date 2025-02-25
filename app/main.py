@@ -1,9 +1,14 @@
 from flask import Blueprint, render_template
+from flask_login import login_required
 
-# Create Blueprint
-main_bp = Blueprint('main', __name__)
+main_bp = Blueprint("main", __name__)
 
-@main_bp.route('/dashboard')
+@main_bp.route("/dashboard")
+@login_required
 def dashboard():
-    return render_template('dashboard.html')  # Ensure you have a `dashboard.html` file
+    return render_template("dashboard.html")
 
+# Route for base.html
+@main_bp.route("/base")
+def base():
+    return render_template("base.html")

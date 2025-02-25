@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CryptaWallX{% endblock %}</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Load SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Load Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #1e1e2f;
+            color: #ffffff;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar a {
+            color: #ffffff;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #2e2e3f;
+        }
+
+        /* Progress Bar Styles */
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #2196F3;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            display: none;
+        }
+
+        /* Main Content Area */
+        #content {
+            margin-left: 250px; /* Adjust for sidebar width */
+            padding: 20px;
+        }
+
+        /* Hide sidebar on specific pages */
+        .no-sidebar .sidebar {
+            display: none;
+        }
+
+        .no-sidebar #content {
+            margin-left: 0;
+        }
+    </style>
+</head>
+
+<body class="{% if no_sidebar %}no-sidebar{% endif %}">
+
+<!-- Global Progress Bar -->
+<div class="progress-bar" id="global-progress-bar"></div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <h2>CryptaWallX</h2>
+    <nav>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/network-settings">Network Settings</a>
+        <a href="/settings">Settings</a>
+        <a href="{{ url_for('auth.logout') }}" id="logout-link">Logout</a>
+    </nav>
+</div>
+
+<!-- Main Content Area -->
+<div id="content">
+    {% block content %}
+    <!-- Dynamic content will load here -->
+    {% endblock %}
+</div>
+
+<!-- Load SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- JavaScript -->
+<script>
+
+    document.getElementById('logout-link').addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent default link behavior
+        window.location.href = "{{ url_for('auth.logout') }}"; // Force full page redirect
+    });
+
+
+    // Function to show notifications globally
+    window.showNotification = function(message, category) {
+        let icon = "";
+
+        switch (category) {
+            case "success": icon = "success"; break;
+            case "error": icon = "error"; break;
+            case "warning": icon = "warning"; break;
+            case "info": icon = "info"; break;
+            default: icon = "info";
+        }
+
+        // Show SweetAlert2 notification
+        Swal.fire({
+            icon: icon,
+            title: message,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            toast: true,
+            background: '#1e1e2f',
+            color: '#ffffff',
+            customClass: {
+                popup: 'notify-popup',
+                title: 'notify-title',
+                icon: 'notify-icon'
+            }
+        });
+    };
+
+    // Handle Flask flash messages on page load
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                showNotification("{{ message | safe }}", "{{ category }}");
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    // AJAX Navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBar = document.getElementById('global-progress-bar');
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('href');
+
+                // Show progress bar
+                progressBar.style.display = 'block';
+
+                // Load content via AJAX
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        // Update content area
+                        document.getElementById('content').innerHTML = html;
+
+                        // Hide progress bar
+                        progressBar.style.display = 'none';
+
+                        // Update browser history
+                        history.pushState(null, null, url);
+                    })
+                    .catch(error => {
+                        console.error('Error loading page:', error);
+                        progressBar.style.display = 'none';
+                    });
+            });
+        });
+    });
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function() {
+        const url = location.href;
+
+        // Show progress bar
+        progressBar.style.display = 'block';
+
+        // Load content via AJAX
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                // Update content area
+                document.getElementById('content').innerHTML = html;
+
+                // Hide progress bar
+                progressBar.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error loading page:', error);
+                progressBar.style.display = 'none';
+            });
+    });
+</script>
+
+</body>
+</html>

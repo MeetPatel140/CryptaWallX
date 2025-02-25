@@ -1,8 +1,7 @@
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, current_user, login_user, logout_user
+from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
-from werkzeug.security import generate_password_hash, check_password_hash
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -20,21 +19,19 @@ def create_app():
     db.init_app(app)
     Migrate(app, db)
     login_manager.init_app(app)
+    login_manager.login_view = "auth.login"
 
-    # Set the login route for unauthenticated users
-    login_manager.login_view = 'auth.login'
-
-    from app.models import User  # Ensure models are imported
+    # Import the User model *AFTER* initializing db
+    from app.models import User
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Import and register the Blueprint correctly
+    # Import and register blueprints
     from app.auth import auth as auth_bp
     app.register_blueprint(auth_bp, url_prefix="/auth")
 
-    # Import the main Blueprint properly
     from app.main import main_bp
     app.register_blueprint(main_bp)
 
