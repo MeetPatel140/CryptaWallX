@@ -41,11 +41,12 @@ def register():
         # Create new user
         new_user = User(
             email=form.email.data,
-            password=form.password.data  # Use the virtual property
+            password = form.password.data.strip()  # Use the virtual property to hash the password
         )
         db.session.add(new_user)
         db.session.commit()
-        flash('Registration Successful ! Please log in.', 'success')
+        print(f"User created: {new_user.email}, Password Hash: {new_user.password_hash}")  # Debug statement
+        flash('Registration Successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))
     
     return render_template('register.html', form=form)
@@ -55,23 +56,23 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        print(f"[DEBUG] Form submitted with email: {form.email.data}")
-
         user = User.query.filter_by(email=form.email.data).first()
         
         if user:
-            print(f"[DEBUG] User found: {user.email}")
+            print(f"Stored Password Hash: {user.password_hash}")  # Debug statement
+            print(f"Entered Password: {form.password.data}")  # Debug statement
+            
+            if user.check_password(form.password.data):  # Verify the password
+                print("Password matched!")  # Debug statement
+                login_user(user)
+                flash("Logged-in Successfully!", "success")
+                return redirect(url_for("main.dashboard"))
+            else:
+                print("Password did not match!")  # Debug statement
+                flash("Invalid email or password!", "danger")
         else:
-            print("[DEBUG] User not found in database")
-        
-        if user and user.check_password(form.password.data):
-            print("[DEBUG] Password matched!")
-            login_user(user)
-            flash("Logged-in Successfully !", "success")
-            return redirect(url_for("main.dashboard"))
-        else:
-            print("[DEBUG] Invalid email or password")
-            flash("Invalid email or password !", "danger")
+            print("User not found!")  # Debug statement
+            flash("Invalid email or password!", "danger")
 
     return render_template("login.html", form=form)
 
@@ -80,5 +81,5 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash("Logged-out Successfully !", "success")
+    flash("Logged-out Successfully!", "success")
     return redirect(url_for("auth.login", no_sidebar=True))

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Bandwidth Management — CryptaWallX{% endblock %}
+
+{% block content %}
+<h1>Bandwidth Management</h1>
+
+<!-- Add Bandwidth Rule Form -->
+<div class="card">
+    <div class="card-header">
+        <h2>Add Bandwidth Rule</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('bandwidth.bandwidth_page') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="adapter_name">Network Adapter:</label>
+                <select id="adapter_name" name="adapter_name" class="form-control" required>
+                    <option value="">Select Adapter</option>
+                    {% for adapter in adapters %}
+                        <option value="{{ adapter }}">{{ adapter }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="control_mode">Control Mode:</label>
+                <select id="control_mode" name="control_mode" class="form-control" required>
+                    <option value="limit">Limit</option>
+                    <option value="block">Block</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="upload_limit">Upload Limit (Mbps):</label>
+                <input type="number" id="upload_limit" name="upload_limit" class="form-control" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="download_limit">Download Limit (Mbps):</label>
+                <input type="number" id="download_limit" name="download_limit" class="form-control" min="0">
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Rule
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Existing Bandwidth Rules -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h2>Existing Bandwidth Rules</h2>
+    </div>
+    <div class="card-body">
+        {% if rules %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Adapter</th>
+                    <th>Mode</th>
+                    <th>Upload Limit</th>
+                    <th>Download Limit</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in rules %}
+                <tr>
+                    <td>{{ rule.id }}</td>
+                    <td>{{ rule.adapter_name }}</td>
+                    <td>{{ rule.control_mode }}</td>
+                    <td>{{ rule.upload_limit }} Mbps</td>
+                    <td>{{ rule.download_limit }} Mbps</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('bandwidth.delete_bandwidth_rule', rule_id=rule.id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No bandwidth rules found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
