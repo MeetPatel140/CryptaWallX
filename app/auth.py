@@ -28,6 +28,10 @@ class LoginForm(FlaskForm):
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
+        if form.password.data != form.confirm_password.data:
+            flash('Passwords do not match. Please try again.', 'danger')
+            return redirect(url_for('auth.register'))       
+        
         # Check if user already exists
         existing_user = User.query.filter_by(email=form.email.data).first()
         if existing_user:

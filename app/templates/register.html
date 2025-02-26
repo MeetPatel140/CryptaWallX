@@ -4,50 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - CryptaWallX</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css" media="all">
 
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Load SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Load Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="login-container">
-        <h2>Register to CryptaWallX</h2>
 
-        <!-- Flash Messages via Notify.js -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+<div class="login-container">
+    <h2><i class="fas fa-user-edit"></i> Register to CryptaWallX</h2>
 
-        <form method="POST" action="{{ url_for('auth.register') }}">
-            {{ form.hidden_tag() }}
+    <!-- Flash Messages via SweetAlert2 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <script>
+                    // Show SweetAlert2 notification
+                    Swal.fire({
+                        icon: "{{ category }}",
+                        title: "{{ message | safe }}",
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        toast: true,
+                        background: '#1e1e2f',
+                        color: '#ffffff',
+                        customClass: {
+                            popup: 'notify-popup',
+                            title: 'notify-title',
+                            icon: 'notify-icon'
+                        }
+                    });
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
-            <div class="input-group">
-                <label for="email">Email:</label>
-                {{ form.email(class="form-control", placeholder="Enter your email", required="required", type="email") }}
-            </div>
+    <form id="registerForm" method="POST" action="{{ url_for('auth.register') }}">
+        {{ form.hidden_tag() }}
 
-            <div class="input-group">
-                <label for="password">Password:</label>
-                {{ form.password(class="form-control", placeholder="Enter your password", required="required", type="password") }}
-            </div>
-
-            <div class="input-group">
-                <label for="confirm_password">Confirm Password:</label>
-                {{ form.confirm_password(class="form-control", placeholder="Confirm your password", required="required", type="password") }}
-            </div>
-
-            <button type="submit" class="btn-login">Register</button>
-        </form>
-
-        <div class="login-link">
-            Already have an account? <a href="{{ url_for('auth.login') }}">Login</a>
+        <div class="input-group">
+            <label for="email">Email:</label>
+            {{ form.email(class="form-control", placeholder="Enter your email", required="required", id="email") }}
         </div>
+
+        <div class="input-group">
+            <label for="password">Password:</label>
+            {{ form.password(class="form-control", placeholder="Enter your password", required="required", type="password", id="password") }}
+        </div>
+
+        <div class="input-group">
+            <label for="confirm_password">Confirm Password:</label>
+            {{ form.confirm_password(class="form-control", placeholder="Confirm your password", required="required", type="password", id="confirm_password") }}
+        </div>
+
+        <button type="submit" class="btn-login"><i class="fas fa-fas fa-user-plus"></i> Register</button>
+    </form>
+
+    <div class="login-link">
+        Already have an account? <a href="{{ url_for('auth.login') }}">Login</a>
     </div>
+</div>
+
+<!-- Load SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- JavaScript -->
+<script>
+    // Function to show SweetAlert2 notifications
+    function showNotification(message, category) {
+        let icon = "";
+
+        switch (category) {
+            case "success": icon = "success"; break;
+            case "error": icon = "error"; break;
+            case "warning": icon = "warning"; break;
+            case "info": icon = "info"; break;
+            default: icon = "info";
+        }
+
+        // Show SweetAlert2 notification
+        Swal.fire({
+            icon: icon,
+            title: message,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            toast: true,
+            background: '#1e1e2f',
+            color: '#ffffff',
+            customClass: {
+                popup: 'notify-popup',
+                title: 'notify-title',
+                icon: 'notify-icon'
+            }
+        });
+    }
+
+    // Handle form submission
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+        // Prevent form submission
+        event.preventDefault();
+
+        // Get form values
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showNotification("Please enter a valid email address.", "error");
+            return;
+        }
+
+        // Validate password length
+        if (password.length < 8) {
+            showNotification("Password must be at least 8 characters long.", "error");
+            return;
+        }
+
+        // Validate password match
+        if (password !== confirmPassword) {
+            showNotification("Passwords do not match.", "error");
+            return;
+        }
+
+        // If all validations pass, submit the form
+        this.submit();
+    });
+
+    // Handle Flask flash messages on page load
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                showNotification("{{ message | safe }}", "{{ category }}");
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</script>
 </body>
 </html>
