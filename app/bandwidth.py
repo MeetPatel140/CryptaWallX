@@ -4,8 +4,13 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
 from app.models import BandwidthRule
 from app import db
+from flask import jsonify
+import random
 
 bandwidth_bp = Blueprint('bandwidth', __name__)
+
+
+
 
 def get_network_adapters():
     try:
@@ -40,24 +45,36 @@ def bandwidth_page():
             return redirect(url_for("bandwidth.bandwidth_page"))
 
         # Convert empty strings to None (NULL in the database)
-        upload_limit = int(upload_limit) if upload_limit else None
-        download_limit = int(download_limit) if download_limit else None
+        upload_limit = int(upload_limit) if upload_limit else 0
+        download_limit = int(download_limit) if download_limit else 0
 
-        # Create and save the rule
-        rule = BandwidthRule(
-            adapter_name=adapter_name,
-            control_mode=control_mode,
-            upload_limit=upload_limit,
-            download_limit=download_limit,
-        )
-        db.session.add(rule)
+        # Check if a rule for the same adapter already exists
+        existing_rule = BandwidthRule.query.filter_by(adapter_name=adapter_name).first()
+
+        if existing_rule:
+            # Update the existing rule
+            existing_rule.control_mode = control_mode
+            existing_rule.upload_limit = upload_limit
+            existing_rule.download_limit = download_limit
+            flash(f"Bandwidth rule updated for {adapter_name}!", "success")
+        else:
+            # Create a new rule
+            rule = BandwidthRule(
+                adapter_name=adapter_name,
+                control_mode=control_mode,
+                upload_limit=upload_limit,
+                download_limit=download_limit,
+            )
+            db.session.add(rule)
+            flash(f"Bandwidth rule added for {adapter_name}!", "success")
+
+        # Commit changes to the database
         db.session.commit()
 
         # Apply the bandwidth rule
         result = apply_bandwidth_rule(adapter_name, upload_limit, download_limit, control_mode)
         flash(result, "info")
 
-        flash(f"Bandwidth rule added for {adapter_name}!", "success")
         return redirect(url_for("bandwidth.bandwidth_page"))
 
     return render_template("bandwidth.html", adapters=adapters, rules=rules)
@@ -78,9 +95,9 @@ def apply_bandwidth_rule(adapter, upload_limit, download_limit, control_mode):
                 f"mtu={upload_limit}", "store=persistent"
             ]
             subprocess.run(command)
-            return f"Bandwidth rule applied: {adapter} - Upload: {upload_limit} Kbps, Download: {download_limit} Kbps"
+            return f"Bandwidth rule set for {adapter} - Upload: {upload_limit}Mbps, Download: {download_limit}Mbps"
         
-        return "Invalid bandwidth settings"
+        return f"Bandwidth rule set for {adapter}"
     
     except Exception as e:
         return f"Error: {e}"

@@ -25,20 +25,22 @@
 
             <div class="form-group">
                 <label for="control_mode">Control Mode:</label>
-                <select id="control_mode" name="control_mode" class="form-control" required>
+                <select id="control_mode" name="control_mode" class="form-control" required onchange="toggleLimitFields()">
                     <option value="limit">Limit</option>
                     <option value="block">Block</option>
                 </select>
             </div>
 
-            <div class="form-group">
+            <!-- Upload Limit Field -->
+            <div class="form-group" id="upload_limit_group">
                 <label for="upload_limit">Upload Limit (Mbps):</label>
-                <input type="number" id="upload_limit" name="upload_limit" class="form-control" min="0">
+                <input type="number" id="upload_limit" name="upload_limit" class="form-control" min="0" max="100000">
             </div>
 
-            <div class="form-group">
+            <!-- Download Limit Field -->
+            <div class="form-group" id="download_limit_group">
                 <label for="download_limit">Download Limit (Mbps):</label>
-                <input type="number" id="download_limit" name="download_limit" class="form-control" min="0">
+                <input type="number" id="download_limit" name="download_limit" class="form-control" min="0" max="100000">
             </div>
 
             <button type="submit" class="btn btn-primary">
@@ -58,7 +60,6 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Adapter</th>
                     <th>Mode</th>
                     <th>Upload Limit</th>
@@ -69,7 +70,6 @@
             <tbody>
                 {% for rule in rules %}
                 <tr>
-                    <td>{{ rule.id }}</td>
                     <td>{{ rule.adapter_name }}</td>
                     <td>{{ rule.control_mode }}</td>
                     <td>{{ rule.upload_limit }} Mbps</td>
@@ -91,4 +91,30 @@
         {% endif %}
     </div>
 </div>
+
+<!-- JavaScript to Toggle Limit Fields -->
+<script>
+    function toggleLimitFields() {
+        const controlMode = document.getElementById('control_mode').value;
+        const uploadLimitGroup = document.getElementById('upload_limit_group');
+        const downloadLimitGroup = document.getElementById('download_limit_group');
+
+        if (controlMode === 'limit') {
+            uploadLimitGroup.style.display = 'block';
+            downloadLimitGroup.style.display = 'block';
+            document.getElementById('upload_limit').required = true;
+            document.getElementById('download_limit').required = true;
+        } else {
+            uploadLimitGroup.style.display = 'none';
+            downloadLimitGroup.style.display = 'none';
+            document.getElementById('upload_limit').required = false;
+            document.getElementById('download_limit').required = false;
+        }
+    }
+
+    // Initialize the visibility of limit fields based on the selected control mode
+    document.addEventListener('DOMContentLoaded', () => {
+        toggleLimitFields();
+    });
+</script>
 {% endblock %}
